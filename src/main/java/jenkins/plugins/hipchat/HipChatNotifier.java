@@ -8,6 +8,7 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import net.sf.json.JSONObject;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.StaplerRequest;
@@ -22,6 +23,8 @@ public class HipChatNotifier extends Notifier {
 
     private static final Logger logger = Logger.getLogger(HipChatNotifier.class.getName());
 
+    private String apiVersion;
+
     private String authToken;
     private String buildServerUrl;
     private String room;
@@ -30,6 +33,10 @@ public class HipChatNotifier extends Notifier {
     @Override
     public DescriptorImpl getDescriptor() {
         return (DescriptorImpl) super.getDescriptor();
+    }
+
+    public String getApiVersion() {
+        return apiVersion;
     }
 
     public String getRoom() {
@@ -73,6 +80,7 @@ public class HipChatNotifier extends Notifier {
 
     @Extension
     public static class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+        private String apiVersion;
         private String token;
         private String room;
         private String buildServerUrl;
@@ -80,6 +88,10 @@ public class HipChatNotifier extends Notifier {
 
         public DescriptorImpl() {
             load();
+        }
+
+        public String getApiVersion() {
+            return apiVersion;
         }
 
         public String getToken() {
@@ -104,6 +116,7 @@ public class HipChatNotifier extends Notifier {
 
         @Override
         public HipChatNotifier newInstance(StaplerRequest sr) {
+            if (apiVersion == null) apiVersion = sr.getParameter("hipChatApiVersion");
             if (token == null) token = sr.getParameter("hipChatToken");
             if (buildServerUrl == null) buildServerUrl = sr.getParameter("hipChatBuildServerUrl");
             if (room == null) room = sr.getParameter("hipChatRoom");
@@ -113,13 +126,18 @@ public class HipChatNotifier extends Notifier {
 
         @Override
         public boolean configure(StaplerRequest sr, JSONObject formData) throws FormException {
-            token = sr.getParameter("hipChatToken");
-            room = sr.getParameter("hipChatRoom");
-            buildServerUrl = sr.getParameter("hipChatBuildServerUrl");
-            sendAs = sr.getParameter("hipChatSendAs");
+            apiVersion = formData.getString("hipChatApiVersion");
+            buildServerUrl = formData.getString("hipChatBuildServerUrl");
             if (buildServerUrl != null && !buildServerUrl.endsWith("/")) {
                 buildServerUrl = buildServerUrl + "/";
             }
+
+            if (ObjectUtils.equals(apiVersion, "v1")) {
+                token = formData.getString("hipChatToken");
+                room = formData.getString("hipChatRoom");
+                sendAs = formData.getString("hipChatSendAs");
+            }
+
             try {
                 new HipChatNotifier(token, room, buildServerUrl, sendAs);
             } catch (Exception e) {
