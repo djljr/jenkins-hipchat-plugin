@@ -26,11 +26,21 @@
             <f:entry title="Send As" help="${rootURL}/plugin/hipchat/help-globalConfig-hipChatSendAs.html">
                 <f:textbox name="hipChatSendAs" value="${descriptor.getSendAs()}" />
             </f:entry>
+            <f:validateButton title="Send Test Notification" progress="Sending"
+                method="sendTestNotificationV1" with="hipChatToken,hipChatRoom,hipChatSendAs" />
         </f:dropdownListBlock>
         <f:dropdownListBlock title="v2" selected="${descriptor.getApiVersion()=='v2'}">
             <f:invisibleEntry>
                 <input type="hidden" name="hipChatApiVersion" value="v2"/>
             </f:invisibleEntry>
+            <f:entry title="Default API Token" help="${rootURL}/plugin/hipchat/help-globalConfig-hipChatTokenV2.html">
+                <f:textbox name="hipChatToken" value="${descriptor.getToken()}" />
+            </f:entry>
+            <f:entry title="Default Room" help="${rootURL}/plugin/hipchat/help-globalConfig-hipChatRoom.html">
+                <f:textbox name="hipChatRoom" value="${descriptor.getRoom()}" />
+            </f:entry>
+            <f:validateButton title="Send Test Notification" progress="Sending"
+                method="sendTestNotificationV2" with="hipChatToken,hipChatRoom" />
         </f:dropdownListBlock>
     </f:dropdownList>
     <f:entry title="Build Server URL" help="${rootURL}/plugin/hipchat/help-globalConfig-hipChatBuildServerUrl.html">

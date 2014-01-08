@@ -7,14 +7,17 @@ import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
+import hudson.util.FormValidation;
 import net.sf.json.JSONObject;
 import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import org.kohsuke.stapler.QueryParameter;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.export.Exported;
 
 import java.io.IOException;
+import java.util.Date;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -114,6 +117,27 @@ public class HipChatNotifier extends Notifier {
             return true;
         }
 
+        public FormValidation doSendTestNotificationV1(@QueryParameter("hipChatToken") final String token,
+                                                       @QueryParameter("hipChatRoom") final String room,
+                                                       @QueryParameter("hipChatSendAs") final String sendAs) {
+            try {
+                new StandardHipChatService(token, room, sendAs).publish("Testing " + new Date().toString(), "purple");
+                return FormValidation.ok("Sent. Look for a purple message in the room [" + room + "] from [" + sendAs + "]");
+            } catch (Exception e) {
+                return FormValidation.error("Got Exception: " + e.getMessage());
+            }
+        }
+
+        public FormValidation doSendTestNotificationV2(@QueryParameter("hipChatToken") final String token,
+                                                       @QueryParameter("hipChatRoom") final String room) {
+            try {
+                new HipChatServiceV2(token, room).publish("Testing " + new Date().toString(), "purple");
+                return FormValidation.ok("Sent. Look for a purple message in the room [" + room + "]");
+            } catch (Exception e) {
+                return FormValidation.error("Got Exception: " + e.getMessage());
+            }
+        }
+
         @Override
         public HipChatNotifier newInstance(StaplerRequest sr) {
             if (apiVersion == null) apiVersion = sr.getParameter("hipChatApiVersion");
@@ -136,6 +160,10 @@ public class HipChatNotifier extends Notifier {
                 token = formData.getString("hipChatToken");
                 room = formData.getString("hipChatRoom");
                 sendAs = formData.getString("hipChatSendAs");
+            }
+            else if(ObjectUtils.equals(apiVersion, "v2")) {
+                token = formData.getString("hipChatToken");
+                room = formData.getString("hipChatRoom");
             }
 
             try {
